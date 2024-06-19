@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: oceanbase
+  name: odc-service
+spec:
+  ports:
+    - protocol: TCP
+      port: 8989
+      targetPort: 8989
+      nodePort: 30657
+  selector:
+    app: odc
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: oceanbase
+  name: odc-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odc
+  template:
+    metadata:
+      labels:
+        app: odc
+    spec:
+      volumes:
+        - name: runtimelogs
+          emptyDir: {}
+      containers:
+        - image: oceanbase/odc:4.3.0
+          imagePullPolicy: IfNotPresent
+          name: odc
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ODC_LOG_DIR
+              value: /opt/odc/log/$(POD_NAME)
+            - name: ODC_PROFILE_MODE
+              value: "alipay"
+            - name: DATABASE_HOST
+              value: "10.43.144.200"
+            - name: DATABASE_PORT
+              value: "2883"
+            - name: DATABASE_USERNAME
+              value: "root@sys"
+            - name: DATABASE_PASSWORD
+              value: "JS<>hxS`Ht7xJp%ad4bq4M,R"
+            - name: DATABASE_NAME
+              value: "test"
+            - name: JVM_MAX_HEAP
+              value: 4000m
+            - name: "ODC_APP_EXTRA_ARGS" # Important environment variable
+              value: "--odc.integration.bastion.account.query.request-url='http://10.42.0.1:18084/api/v1/auth/${account_verify_token}' --odc.integration.bastion.enabled='true' --odc.integration.bastion.account.auto-login-enabled='true' --odc.connect.database.sync.block-internal-database='false' --odc.database.schema.sync.exclude-schemas.ob-mysql=''"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+          ports:
+            - containerPort: 8989
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - name: runtimelogs
+              mountPath: "/opt/odc/log"
+          readinessProbe:
+            tcpSocket:
+              port: 8989
+            # initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8989
+            # initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30

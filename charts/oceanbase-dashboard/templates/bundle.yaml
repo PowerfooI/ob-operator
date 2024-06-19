@@ -20,6 +20,7 @@ spec:
       containers:
         - name: dashboard
           image: oceanbase/oceanbase-dashboard:{{ .Chart.AppVersion }}
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: 100m
@@ -49,6 +50,7 @@ spec:
               value: {{ .Release.Name }}-alertmanager-conf
         - name: prometheus
           image: prom/prometheus:v2.51.1
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: 100m
@@ -70,6 +72,7 @@ spec:
               mountPath: /etc/prometheus/rules/
         - name: alertmanager
           image: prom/alertmanager:v0.27.0
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]
           ports:
             - name: alertmanager

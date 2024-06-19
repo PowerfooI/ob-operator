@@ -9,3 +9,7 @@ configNamespace:
 service:
   type: NodePort
   port: 80
+
+# envs:
+#   - name: "ODC_URL"
+#     value: "http://oceanbase-dashboard:80"
